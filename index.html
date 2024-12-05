@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BOT EV Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: white;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      background-color: #1e90ff;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #333;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #e6f7ff;
+      border-left: 4px solid #1e90ff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>BOT EV Tool</h1>
+    <form id="evForm">
+      <label for="batteryVoltage">Battery Voltage (V):</label>
+      <input type="number" id="batteryVoltage" placeholder="e.g., 48" required>
+
+      <label for="motorType">Motor Type:</label>
+      <select id="motorType" required>
+        <option value="" disabled selected>Select motor type</option>
+        <option value="brushless">Brushless DC (BLDC)</option>
+        <option value="induction">Induction</option>
+        <option value="synchronous">Synchronous</option>
+      </select>
+
+      <label for="errorCode">Error Code (if any):</label>
+      <input type="text" id="errorCode" placeholder="e.g., E03">
+
+      <button type="button" onclick="diagnoseEV()">Diagnose</button>
+    </form>
+    <div class="result" id="result" style="display: none;"></div>
+  </div>
+
+  <script>
+    function diagnoseEV() {
+      const batteryVoltage = document.getElementById('batteryVoltage').value;
+      const motorType = document.getElementById('motorType').value;
+      const errorCode = document.getElementById('errorCode').value;
+      const resultDiv = document.getElementById('result');
+
+      // Simulated troubleshooting logic
+      let resultMessage = "Diagnosis Result:\n";
+      if (!batteryVoltage || !motorType) {
+        resultMessage += "Please provide all required specifications.";
+      } else {
+        resultMessage += `Battery Voltage: ${batteryVoltage}V\n`;
+        resultMessage += `Motor Type: ${motorType}\n`;
+
+        if (errorCode) {
+          resultMessage += `Error Code: ${errorCode}\n`;
+          resultMessage += "Troubleshooting: Refer to the error code manual for specific details.";
+        } else {
+          resultMessage += "No error code provided. Check connections, battery health, and motor controller.";
+        }
+      }
+
+      resultDiv.style.display = 'block';
+      resultDiv.textContent = resultMessage;
+    }
+  </script>
+</body>
+</html>
