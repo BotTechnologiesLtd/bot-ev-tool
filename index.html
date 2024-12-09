@@ -62,54 +62,121 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>BOT EV Tool</h1>
-    <form id="evForm">
-      <label for="batteryVoltage">Battery Voltage (V):</label>
-      <input type="number" id="batteryVoltage" placeholder="e.g., 48" required>
+ <div class="container">
+  <h1>BOT EV Tool</h1>
+  <form id="evForm">
+    <label for="vehicleSerial">Vehicle Serial:</label>
+    <input type="text" id="vehicleSerial" placeholder="e.g., 12345ABC" required>
 
-      <label for="motorType">Motor Type:</label>
-      <select id="motorType" required>
-        <option value="" disabled selected>Select motor type</option>
-        <option value="brushless">Brushless DC (BLDC)</option>
-        <option value="induction">Induction</option>
-        <option value="synchronous">Synchronous</option>
-      </select>
+    <label for="vehicleModel">Vehicle Model:</label>
+    <input type="text" id="vehicleModel" placeholder="e.g., Model-X" required>
 
-      <label for="errorCode">Error Code (if any):</label>
-      <input type="text" id="errorCode" placeholder="e.g., E03">
+    <label for="batteryVoltage">Battery Voltage (V):</label>
+    <input type="number" id="batteryVoltage" placeholder="e.g., 48" required>
 
-      <button type="button" onclick="diagnoseEV()">Diagnose</button>
+    <label for="motorType">Motor Type:</label>
+    <select id="motorType" required>
+      <option value="" disabled selected>Select motor type</option>
+      <option value="brushless">Brushless DC (BLDC)</option>
+      <option value="induction">Induction</option>
+      <option value="synchronous">Synchronous</option>
+    </select>
+
+    <label for="errorCode">Error Code (if any):</label>
+    <input type="text" id="errorCode" placeholder="e.g., E03">
+
+    <button type="button" onclick="diagnoseEV()">Diagnose</button>
+  </form>
+
+  <div class="result" id="result" style="display: none;"></div>
+
+  <div id="parts" style="display: none;">
+    <h3>Select Parts for Replacement/Repair</h3>
+    <form id="partsForm">
+      <label><input type="checkbox" value="Battery"> Battery</label><br>
+      <label><input type="checkbox" value="Motor"> Motor</label><br>
+      <label><input type="checkbox" value="Controller"> Controller</label><br>
+      <button type="button" onclick="saveParts()">Save Selection</button>
     </form>
-    <div class="result" id="result" style="display: none;"></div>
   </div>
 
-  <script>
-    function diagnoseEV() {
-      const batteryVoltage = document.getElementById('batteryVoltage').value;
-      const motorType = document.getElementById('motorType').value;
-      const errorCode = document.getElementById('errorCode').value;
-      const resultDiv = document.getElementById('result');
+  <div id="dashboard" style="display: none;">
+    <h3>Failure Rate Dashboard</h3>
+    <canvas id="failureChart" width="400" height="200"></canvas>
+  </div>
+</div>
 
-      // Simulated troubleshooting logic
-      let resultMessage = "Diagnosis Result:\n";
-      if (!batteryVoltage || !motorType) {
-        resultMessage += "Please provide all required specifications.";
+<script>
+  async function fetchXMLData() {
+    const response = await fetch("troubleshooting.xml");
+    const xmlData = await response.text();
+    return new DOMParser().parseFromString(xmlData, "application/xml");
+  }
+
+  function diagnoseEV() {
+    const vehicleSerial = document.getElementById("vehicleSerial").value;
+    const vehicleModel = document.getElementById("vehicleModel").value;
+    const batteryVoltage = document.getElementById("batteryVoltage").value;
+    const motorType = document.getElementById("motorType").value;
+    const errorCode = document.getElementById("errorCode").value;
+    const resultDiv = document.getElementById("result");
+
+    // Load troubleshooting flowchart from XML
+    fetchXMLData().then((xml) => {
+      const steps = xml.getElementsByTagName("step");
+      let resultMessage = `Diagnosis for ${vehicleSerial} (${vehicleModel}):\n`;
+
+      if (errorCode) {
+        const errorNode = Array.from(steps).find(
+          (step) => step.getAttribute("code") === errorCode
+        );
+        resultMessage += errorNode
+          ? `Troubleshooting: ${errorNode.textContent}`
+          : "Error code not found.";
       } else {
-        resultMessage += `Battery Voltage: ${batteryVoltage}V\n`;
-        resultMessage += `Motor Type: ${motorType}\n`;
-
-        if (errorCode) {
-          resultMessage += `Error Code: ${errorCode}\n`;
-          resultMessage += "Troubleshooting: Refer to the error code manual for specific details.";
-        } else {
-          resultMessage += "No error code provided. Check connections, battery health, and motor controller.";
-        }
+        resultMessage += "No error code provided. General diagnostics:\n";
+        resultMessage +=
+          "1. Check battery connections.\n2. Verify motor controller.\n3. Inspect motor wiring.";
       }
 
-      resultDiv.style.display = 'block';
+      resultDiv.style.display = "block";
       resultDiv.textContent = resultMessage;
-    }
-  </script>
+
+      // Display parts selection
+      document.getElementById("parts").style.display = "block";
+    });
+  }
+
+  function saveParts() {
+    const selectedParts = Array.from(
+      document.querySelectorAll("#partsForm input:checked")
+    ).map((checkbox) => checkbox.value);
+
+    alert(`Saved parts for repair/replacement: ${selectedParts.join(", ")}`);
+    generateDashboard();
+  }
+
+  function generateDashboard() {
+    const ctx = document.getElementById("failureChart").getContext("2d");
+
+    const data = {
+      labels: ["Battery", "Motor", "Controller"],
+      datasets: [
+        {
+          label: "Failure Rate (%)",
+          data: [30, 50, 20],
+          backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+        },
+      ],
+    };
+
+    new Chart(ctx, {
+      type: "bar",
+      data: data,
+    });
+
+    document.getElementById("dashboard").style.display = "block";
+  }
+</script>
 </body>
 </html>
