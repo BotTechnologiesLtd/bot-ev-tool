@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<troubleshooting>
+  <step code="E03">Check motor controller wiring.</step>
+  <step code="E05">Inspect battery connections.</step>
+  <step code="E07">Test motor functionality.</step>
+</troubleshooting>
