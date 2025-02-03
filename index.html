@@ -82,9 +82,9 @@
     <label for="motorType">Motor Type:</label>
     <select id="motorType" required>
       <option value="" disabled selected>Select motor type</option>
-      <option value="brushless">Brushless DC (BLDC)</option>
-      <option value="induction">Induction</option>
-      <option value="synchronous">Synchronous</option>
+      <option value="Brushless DC">Brushless DC (BLDC)</option>
+      <option value="Induction">Induction</option>
+      <option value="Synchronous">Synchronous</option>
     </select>
 
     <label for="errorCode">Error Code (if any):</label>
@@ -113,9 +113,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Fetch solutions from Google Sheets
-  async function fetchSolutions() {
-    const response = await fetch('https://script.google.com/macros/s/YOUR_GOOGLE_SHEETS_API_URL/exec');
+  // Fetch data from Google Sheets
+  async function fetchData(sheetName) {
+    const url = `https://script.google.com/macros/s/AKfycbyz8sl5bYKREb9BBFVE1Dz9IKgCV1NiTGZeId0SOEaGR7XnOLnqUy56-DYLs74ZaMHk0g/exec?sheet=${sheetName}`;
+    const response = await fetch(url);
     const data = await response.json();
     return data;
   }
@@ -138,15 +139,17 @@
     document.getElementById("evForm").submit();
 
     // Fetch solutions from Google Sheets
-    fetchSolutions().then((solutions) => {
+    fetchData("Solutions").then((solutions) => {
       const resultDiv = document.getElementById("result");
       let resultMessage = `Diagnosis for ${vehicleSerial} (${vehicleModel}):\n`;
 
       if (errorCode) {
         const solution = solutions.find(
-          (item) => item.category.toLowerCase() === motorType && item.issueDescription.toLowerCase().includes(errorCode.toLowerCase())
+          (item) =>
+            item.Category.toLowerCase() === motorType.toLowerCase() &&
+            item["Issue Description"].toLowerCase().includes(errorCode.toLowerCase())
         );
-        resultMessage += solution ? `Troubleshooting: ${solution.solution}` : "Error code not found.";
+        resultMessage += solution ? `Troubleshooting: ${solution.Solution}` : "Error code not found.";
       } else {
         resultMessage += "No error code provided. General diagnostics:\n";
         resultMessage += "1. Check battery connections.\n2. Verify motor controller.\n3. Inspect motor wiring.";
@@ -166,44 +169,53 @@
     ).map((checkbox) => checkbox.value);
 
     alert(`Saved parts for repair/replacement: ${selectedParts.join(", ")}`);
+
     generateDashboard(selectedParts);
   }
 
   function generateDashboard(selectedParts) {
     const ctx = document.getElementById("failureChart").getContext("2d");
 
-    // Simulate failure rates based on selected parts
-    const failureRates = {
-      Battery: selectedParts.includes("Battery") ? 40 : 30,
-      Motor: selectedParts.includes("Motor") ? 60 : 50,
-      Controller: selectedParts.includes("Controller") ? 30 : 20,
-    };
+    // Fetch failure rates from Google Sheets
+    fetchData("Failure Rate Dashboard").then((data) => {
+      const failureRates = {};
+      data.forEach((row) => {
+        failureRates[row.Component] = parseFloat(row["Failure Rate (%)"]);
+      });
 
-    const data = {
-      labels: Object.keys(failureRates),
-      datasets: [
-        {
-          label: "Failure Rate (%)",
-          data: Object.values(failureRates),
-          backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
-        },
-      ],
-    };
+      // Adjust failure rates based on selected parts
+      selectedParts.forEach((part) => {
+        if (failureRates[part]) {
+          failureRates[part] += 10; // Increase failure rate by 10% for selected parts
+        }
+      });
 
-    new Chart(ctx, {
-      type: "bar",
-      data: data,
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
+      const chartData = {
+        labels: Object.keys(failureRates),
+        datasets: [
+          {
+            label: "Failure Rate (%)",
+            data: Object.values(failureRates),
+            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+          },
+        ],
+      };
+
+      new Chart(ctx, {
+        type: "bar",
+        data: chartData,
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    document.getElementById("dashboard").style.display = "block";
+      document.getElementById("dashboard").style.display = "block";
+    });
   }
 </script>
 </body>
